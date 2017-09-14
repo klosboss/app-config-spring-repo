@@ -14,10 +14,10 @@ public class GreetingController {
 
   private final Logger logger = LoggerFactory.getLogger(GreetingController.class);
 
-  private final LoadBalancerClient loadBalancerClient;
+  private final RestTemplate restTemplate;
 
-  public GreetingController(LoadBalancerClient loadBalancerClient) {
-    this.loadBalancerClient = loadBalancerClient;
+  public GreetingController(RestTemplate restTemplate) {
+    this.restTemplate = restTemplate;
   }
 
   @RequestMapping("/")
@@ -26,22 +26,12 @@ public class GreetingController {
     logger.debug("Adding greeting");
     model.addAttribute("msg", "Greetings!!!");
 
-    RestTemplate restTemplate = new RestTemplate();
-    String fortune = restTemplate.getForObject(fetchFortuneServiceUrl(), String.class);
+    String fortune = restTemplate.getForObject("http://fortune-service", String.class);
 
     logger.debug("Adding fortune: {}", fortune);
     model.addAttribute("fortune", fortune);
 
     return "greeting"; // resolves to the greeting.ftl template
-  }
-
-  private String fetchFortuneServiceUrl() {
-    ServiceInstance instance = loadBalancerClient.choose("fortune-service");
-
-    logger.debug("uri: {}", instance.getUri().toString());
-    logger.debug("serviceId: {}", instance.getServiceId());
-
-    return instance.getUri().toString();
   }
 
 }
